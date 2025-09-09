@@ -1,0 +1,103 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pylsp-bec"
+version = "0.1.0"
+description = "A Python Language Server plugin for BEC, the Beamline and Experiment Control system"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = ["bec_lib", "python-lsp-server[all,websockets] ~= 1.12"]
+
+[project.optional-dependencies]
+dev = [
+    "coverage~=7.0",
+    "isort~=5.13, >=5.13.2",
+    "pytest-random-order~=1.1",
+    "pytest-timeout~=2.2",
+    "pytest~=8.0",
+    "pytest-cov~=6.1.1",
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/bec-project/pylsp-bec/issues"
+Homepage = "https://github.com/bec-project/pylsp-bec"
+
+[project.entry-points."pylsp"]
+bec_completion_pylsp_plugin = "pylsp_bec.completions"
+bec_signature_help_pylsp_plugin = "pylsp_bec.signatures"
+
+
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+include = ["**/*"]
+exclude = ["docs/**", "tests/**", "backend/**"]
+
+[tool.hatch.build.targets.sdist]
+ignore-vcs = true
+include = ["**/*"]
+exclude = ["docs/**", "tests/**", "backend/**"]
+
+[tool.black]
+line-length = 100
+skip-magic-trailing-comma = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+known_first_party = ["pylsp_bec"]
+
+[tool.semantic_release]
+build_command = "pip install build wheel && python -m build"
+version_toml = ["pyproject.toml:project.version"]
+
+[tool.semantic_release.commit_author]
+env = "GIT_COMMIT_AUTHOR"
+default = "semantic-release <semantic-release>"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "style",
+    "refactor",
+    "test",
+]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+default_bump_level = 0
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+ignore_token_for_push = true
+
+[tool.semantic_release.remote.token]
+env = "GH_TOKEN"
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = true
+
+[tool.coverage.report]
+skip_empty = true # exclude empty *files*, e.g. __init__.py, from the report
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "return NotImplemented",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+    'if __name__ == "__main__":',
+]
