@@ -1,0 +1,42 @@
+name: Run Pytest with different Python versions
+on: 
+  workflow_call:
+    inputs:
+      BEC_CORE_BRANCH:
+        description: 'Branch of BEC Core to install'
+        required: false
+        default: 'main'
+        type: string
+      PYLSP_BEC_BRANCH:
+        description: 'Branch of Pylsp Bec to install'
+        required: false
+        default: 'main'
+        type: string
+
+jobs:
+  pytest-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: bec-project/pylsp_bec
+          ref: ${{ inputs.PYLSP_BEC_BRANCH }}
+
+      - name: Install Pylsp Bec and dependencies
+        uses: ./.github/actions/pylsp_bec_install
+        with:
+          BEC_CORE_BRANCH: ${{ inputs.BEC_CORE_BRANCH }}
+          PYLSP_BEC_BRANCH: ${{ inputs.PYLSP_BEC_BRANCH }}
+          PYTHON_VERSION: ${{ matrix.python-version }}
+
+      - name: Run Pytest
+        run: |
+          cd ./pylsp_bec
+          pip install pytest pytest-random-order
+          pytest -v --maxfail=2 --junitxml=report.xml --random-order ./tests

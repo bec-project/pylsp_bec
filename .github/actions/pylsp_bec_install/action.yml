@@ -1,0 +1,45 @@
+name: "Pylsp Bec Install"
+description: "Install Pylsp Bec and related os dependencies"
+inputs:
+  BEC_CORE_BRANCH: # id of input
+    required: false
+    default: "main"
+    description: "Branch of BEC Core to install"
+  PYLSP_BEC_BRANCH: # id of input
+    required: false
+    default: "main"
+    description: "Branch of Pylsp Bec to install"
+  PYTHON_VERSION: # id of input
+    required: false
+    default: "3.11"
+    description: "Python version to use"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
+
+    - name: Checkout BEC Core
+      uses: actions/checkout@v4
+      with:
+        repository: bec-project/bec
+        ref: ${{ inputs.BEC_CORE_BRANCH }}
+        path: ./bec
+
+    - name: Checkout Pylsp Bec repository
+      uses: actions/checkout@v4
+      with:
+        repository: bec-project/pylsp_bec
+        ref: ${{ inputs.PYLSP_BEC_BRANCH }}
+        path: ./pylsp_bec
+
+    - name: Install Python dependencies
+      shell: bash
+      run: |
+        pip install uv
+        uv pip install --system -e ./pylsp_bec[dev]
+        uv pip install --system -e ./bec/bec_lib[dev]
+        uv pip install --system -e ./bec/bec_ipython_client[dev]
