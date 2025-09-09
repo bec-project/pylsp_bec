@@ -78,8 +78,8 @@ def _get_runtime_signatures(document, position):
     namespace = {
         "bec": client,
         "np": np,
-        "dev": client.device_manager.devices,
-        "scans": client.scans,
+        "dev": getattr(client.device_manager, "devices", None),
+        "scans": getattr(client, "scans", None),
         "mv": mv,
         "mvr": mvr,
         "umv": umv,
