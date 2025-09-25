@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+import pytest
 from bec_lib.tests.fixtures import bec_client_mock  # noqa: F401
 
 from pylsp_bec import completions, signatures
@@ -63,7 +64,7 @@ def test_device_name_completions(config, workspace, document, bec_client_mock):
     # Position after 'dev.' on line 11 where we expect device names
     position = {"line": 10, "character": 16}
 
-    with patch("pylsp_bec.client", bec_client_mock):
+    with patch("pylsp_bec.completions.client", bec_client_mock):
         response = completions.pylsp_completions(
             config=config, workspace=workspace, document=document, position=position
         )
@@ -202,6 +203,102 @@ def test_signature_capabilities_support(config, workspace, document, bec_client_
         )
 
     assert response is not None
+
+
+def test_signature_help_with_parameters_for_args(config, workspace, document, bec_client_mock):
+    """
+    Test signature help includes parameter information.
+    The position is inside umvr() call on line 30 in the fixture:
+    umvr(dev.samy, -2, |
+    """
+
+    position = {"line": 29, "character": 23}
+
+    with patch("pylsp_bec.client", bec_client_mock):
+        response = signatures.pylsp_signature_help(
+            config=config, workspace=workspace, document=document, position=position
+        )
+
+    assert response is not None
+    assert response["activeParameter"] == 0  # Should be fixed to 0 since it is args
+
+
+@pytest.mark.parametrize("position", [{"line": 31, "character": 47}, {"line": 32, "character": 47}])
+def test_signature_help_with_parameters_for_args_scans(
+    position, config, workspace, document, bec_client_mock
+):
+    """
+    Test signature help includes parameter information.
+    The position is inside scans.line_scan() call on line 31 in the fixture:
+    scans.line_scan(dev.samx, -5, 5, dev.samy, |
+    """
+    with patch("pylsp_bec.signatures.client", bec_client_mock):
+        response = signatures.pylsp_signature_help(
+            config=config, workspace=workspace, document=document, position=position
+        )
+
+    assert response is not None
+    assert response["activeParameter"] == 0  # Should be fixed to 0 since it is args
+
+
+@pytest.mark.parametrize("position", [{"line": 33, "character": 46}, {"line": 34, "character": 46}])
+def test_signature_help_with_parameters_for_args_scans_kwargs(
+    position, config, workspace, document, bec_client_mock
+):
+    """
+    Test signature help includes parameter information.
+    The position is inside scans.line_scan() call on line 31 in the fixture:
+    scans.line_scan(dev.samx, -5, 5, dev.samy, relative=|
+    """
+    with patch("pylsp_bec.signatures.client", bec_client_mock):
+        response = signatures.pylsp_signature_help(
+            config=config, workspace=workspace, document=document, position=position
+        )
+
+    assert response is not None
+    # line_scan arguments are: args, exp_time, steps, relative
+    # So relative= is the 4th argument, index 3
+    assert response["activeParameter"] == 3
+
+
+@pytest.mark.parametrize("position", [{"line": 35, "character": 61}, {"line": 36, "character": 61}])
+def test_signature_help_with_parameters_for_args_scans_kwargs_filled(
+    position, config, workspace, document, bec_client_mock
+):
+    """
+    Test signature help includes parameter information.
+    The position is inside scans.line_scan() call on line 31 in the fixture:
+    scans.line_scan(dev.samx, -5, 5, dev.samy, relative=True, exp_time=|
+    """
+    with patch("pylsp_bec.signatures.client", bec_client_mock):
+        response = signatures.pylsp_signature_help(
+            config=config, workspace=workspace, document=document, position=position
+        )
+
+    assert response is not None
+    # line_scan arguments are: args, exp_time, steps, relative
+    # So exp_time (the argument being filled) is the 2nd argument, index 1
+    assert response["activeParameter"] == 1
+
+
+@pytest.mark.parametrize("position", [{"line": 37, "character": 60}, {"line": 38, "character": 60}])
+def test_signature_help_with_parameters_for_args_scans_kwargs_filled_arg(
+    position, config, workspace, document, bec_client_mock
+):
+    """
+    Test signature help includes parameter information.
+    The position is inside scans.line_scan() call on line 31 in the fixture:
+    scans.line_scan(dev.samx, -5, 5, dev.samy, relative=True, exp_time|
+    """
+    with patch("pylsp_bec.signatures.client", bec_client_mock):
+        response = signatures.pylsp_signature_help(
+            config=config, workspace=workspace, document=document, position=position
+        )
+
+    assert response is not None
+    # line_scan arguments are: args, exp_time, steps, relative
+    # So exp_time (the argument being filled) is the 2nd argument, index 1
+    assert response["activeParameter"] == 1
 
 
 def test_get_object_from_namespace():
