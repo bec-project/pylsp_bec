@@ -1,4 +1,5 @@
 from functools import reduce
+from inspect import _ParameterKind
 
 import jedi
 import numpy as np
@@ -86,14 +87,17 @@ def _get_runtime_signatures(document, position):
         "umvr": umvr,
     }
     code_position = _utils.position_to_jedi_linecolumn(document, position)
-    script = jedi.Interpreter(document.source, [namespace], path=uris.to_fs_path(document.uri))
+
+    script = jedi.Interpreter(
+        document.source, namespaces=[namespace], path=uris.to_fs_path(document.uri)
+    )
     pos = code_position["line"], code_position["column"]
 
     call_details = helpers.get_signature_details(script._module_node, pos)
     if call_details is None:
         return sig_info
+    pos = call_details.bracket_leaf.start_pos
 
-    pos = code_position["line"], code_position["column"] - 1
     items = script.goto(*pos)
     if not items:
         return sig_info
@@ -120,5 +124,37 @@ def _get_runtime_signatures(document, position):
             for p in sig_items.params
         ]
     sig_info["signatures"].append(sig)
-    sig_info["activeSignature"] = 0
+
+    # if we have *args in the signature, the index of the active parameter should be set to
+    # the arg index if we don't have a keyword argument
+
+    # First, get the index of the args entry of the signature if it exists
+    args_index = next((i for i, p in enumerate(sig_items.params) if p.name == "args"), None)
+    filled_kwargs = [
+        name for _, name, complete in call_details._list_arguments() if name and complete
+    ]
+
+    if call_details.keyword_name_str is None:
+        if args_index is not None:
+            sig_info["activeParameter"] = min(call_details.index, args_index)
+        else:
+            sig_info["activeParameter"] = min(call_details.index, len(sig_items.params))
+        if filled_kwargs:
+            filled_set = set(filled_kwargs)
+            param_names = [
+                p.name for p in sig_items.params if p.kind == _ParameterKind.KEYWORD_ONLY
+            ]
+            remaining_params = [p for p in param_names if p not in filled_set]
+            if remaining_params:
+                next_param = remaining_params[0]
+                for i, p in enumerate(sig_items.params):
+                    if p.name == next_param:
+                        sig_info["activeParameter"] = i
+                        break
+        return sig_info
+
+    for i, p in enumerate(sig_items.params):
+        if p.name == call_details.keyword_name_str:
+            sig_info["activeParameter"] = i
+            break
     return sig_info

@@ -23,3 +23,18 @@ def test_completions():
     array = np.array([1, 2, 3])
 
     return result
+
+
+def test_signatures():
+    # Test signature help for movement functions - cursor inside parentheses
+    umvr(dev.samy, -2, 
+
+    scans.line_scan(dev.samx, -5, 5, dev.samy, 
+    scans.line_scan(dev.samx, -5, 5, dev.samy, )
+    scans.line_scan(dev.samx, -5, 5, relative=
+    scans.line_scan(dev.samx, -5, 5, relative=)
+    scans.line_scan(dev.samx, -5, 5, relative=True, exp_time=
+    scans.line_scan(dev.samx, -5, 5, relative=True, exp_time=)
+    scans.line_scan(dev.samx, -5, 5, relative=True, exp_time
+    scans.line_scan(dev.samx, -5, 5, relative=True, exp_time)
+    
