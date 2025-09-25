@@ -37,7 +37,7 @@ jobs:
         with:
           BEC_CORE_BRANCH: ${{ inputs.BEC_CORE_BRANCH }}
           PYLSP_BEC_BRANCH: ${{ inputs.PYLSP_BEC_BRANCH }}
-          PYTHON_VERSION: 3.11
+          PYTHON_VERSION: 3.12
 
       - name: Run Pytest with Coverage
         id: coverage

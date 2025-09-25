@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "pylsp-bec"
 version = "0.0.1"
 description = "A Python Language Server plugin for BEC, the Beamline and Experiment Control system"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
