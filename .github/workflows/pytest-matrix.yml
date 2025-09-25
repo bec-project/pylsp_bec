@@ -37,6 +37,6 @@ jobs:
 
       - name: Run Pytest
         run: |
-          cd ./pylsp_bec
+          cd ./_pylsp_bec
           pip install pytest pytest-random-order
           pytest -v --maxfail=2 --junitxml=report.xml --random-order ./tests

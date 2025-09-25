@@ -42,7 +42,7 @@ jobs:
       - name: Run Pytest with Coverage
         id: coverage
         run: |
-          cd ./pylsp_bec
+          cd ./_pylsp_bec
           coverage run --source=./pylsp_bec --omit=*/pylsp_bec/tests/* -m pytest -v --junitxml=report.xml --random-order --full-trace ./tests
           coverage report
           coverage xml
