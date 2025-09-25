@@ -50,6 +50,11 @@ exclude = ["docs/**", "tests/**", "backend/**"]
 [tool.black]
 line-length = 100
 skip-magic-trailing-comma = true
+extend-exclude = '''
+(
+  tests/fixtures/simple\.py
+)
+'''
 
 [tool.isort]
 profile = "black"
