@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v1.0.0 (2025-09-25)
+
+### Bug Fixes
+
+- **signature**: Fix signature completion and update the activeParameter
+  ([`5dad870`](https://github.com/bec-project/pylsp_bec/commit/5dad8703521ed5880a07ae860b8ea11acceb6bdc))
+
+### Build System
+
+- Upgrade min python version to 3.11
+  ([`64f9f31`](https://github.com/bec-project/pylsp_bec/commit/64f9f315b462651ccbd816d9a59c07e95257da73))
+
+### Chores
+
+- Fix typo in issue sync
+  ([`b74a3b9`](https://github.com/bec-project/pylsp_bec/commit/b74a3b95cf61b4953d968fa06122d83b4e48d5f0))
+
+- Remove mockup file from formatter
+  ([`1c9f6c2`](https://github.com/bec-project/pylsp_bec/commit/1c9f6c22d567c4178989eba5cdc01a598b9fd082))
+
+### Continuous Integration
+
+- Fix install path for pylsp_bec_install action
+  ([`89decbd`](https://github.com/bec-project/pylsp_bec/commit/89decbdc356cbd1b7029edc3b4fc00c5172cc620))
+
+
 ## v0.0.1 (2025-09-09)
 
 ### Bug Fixes
