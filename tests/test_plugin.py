@@ -6,22 +6,28 @@ from bec_lib.tests.fixtures import bec_client_mock  # noqa: F401
 from pylsp_bec import completions, signatures
 
 
-def test_bec_completions_basic(config, workspace, document, bec_client_mock):
+@pytest.fixture
+def client_mock(bec_client_mock):
+    """Fixture to provide a mock BEC client."""
+    with patch("pylsp_bec.utils.client", bec_client_mock) as mock:
+        yield mock
+
+
+def test_bec_completions_basic(config, workspace, document, client_mock):
     """Test that BEC completions are provided for bec. prefix."""
     # Position after 'bec.' (line 6, character 24 in our fixture)
     position = {"line": 6, "character": 24}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = completions.pylsp_completions(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = completions.pylsp_completions(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     # Should return completion items
     assert response is not None
     assert isinstance(response, list)
 
 
-def test_bec_completions_no_jedi_interference(config, workspace, document):
+def test_bec_completions_no_jedi_interference(config, workspace, document, client_mock):
     """Test that BEC completions don't interfere when Jedi has completions."""
     position = {"line": 6, "character": 24}
 
@@ -36,16 +42,15 @@ def test_bec_completions_no_jedi_interference(config, workspace, document):
     assert response == []
 
 
-def test_device_completions(config, workspace, document, bec_client_mock):
+def test_device_completions(config, workspace, document, client_mock):
     """Test completions for device access patterns."""
     # Position after 'dev.' on line 11 (0-indexed as line 10, character 16)
     # This tests completion for 'dev.samx' in the fixture
     position = {"line": 10, "character": 16}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = completions.pylsp_completions(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = completions.pylsp_completions(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     assert isinstance(response, list)
@@ -59,15 +64,14 @@ def test_device_completions(config, workspace, document, bec_client_mock):
             assert "label" in completion
 
 
-def test_device_name_completions(config, workspace, document, bec_client_mock):
+def test_device_name_completions(config, workspace, document, client_mock):
     """Test that specific device names appear in completions."""
     # Position after 'dev.' on line 11 where we expect device names
     position = {"line": 10, "character": 16}
 
-    with patch("pylsp_bec.completions.client", bec_client_mock):
-        response = completions.pylsp_completions(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = completions.pylsp_completions(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     if response:
@@ -91,33 +95,31 @@ def test_device_name_completions(config, workspace, document, bec_client_mock):
         assert "samx" in labels, f"Device 'samx' not found in completions: {labels[:10]}..."
 
 
-def test_scan_completions(config, workspace, document, bec_client_mock):
+def test_scan_completions(config, workspace, document, client_mock):
     """Test completions for scan methods."""
     # Position after 'scans.' (line 12, character 26 in our fixture)
     position = {"line": 12, "character": 26}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = completions.pylsp_completions(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = completions.pylsp_completions(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
 
 
-def test_numpy_completions(config, workspace, document, bec_client_mock):
+def test_numpy_completions(config, workspace, document, client_mock):
     """Test that numpy completions work through our plugin."""
     # Position after 'np.' (line 21, character 14 in our fixture)
     position = {"line": 21, "character": 14}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = completions.pylsp_completions(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = completions.pylsp_completions(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
 
 
-def test_completion_settings(config, workspace, document, bec_client_mock):
+def test_completion_settings(config, workspace, document, client_mock):
     """Test that completion settings are respected."""
     position = {"line": 6, "character": 24}
 
@@ -134,24 +136,22 @@ def test_completion_settings(config, workspace, document, bec_client_mock):
         }
     )
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = completions.pylsp_completions(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = completions.pylsp_completions(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
 
 
 # Signature tests
-def test_mv_signature_help(config, workspace, document, bec_client_mock):
+def test_mv_signature_help(config, workspace, document, client_mock):
     """Test signature help for movement functions."""
     # Position inside mv() call (line 15, character 8 in our fixture)
     position = {"line": 15, "character": 8}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     # Should return signature information
     assert response is not None
@@ -159,31 +159,29 @@ def test_mv_signature_help(config, workspace, document, bec_client_mock):
     assert "activeSignature" in response
 
 
-def test_signature_help_runtime_fallback(config, workspace, document, bec_client_mock):
+def test_signature_help_runtime_fallback(config, workspace, document, client_mock):
     """Test that runtime signatures work when Jedi fails."""
     position = {"line": 15, "character": 8}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        # Mock document.jedi_script() to return empty signatures
-        document.jedi_script = Mock()
-        document.jedi_script.return_value.get_signatures.return_value = []
+    # Mock document.jedi_script() to return empty signatures
+    document.jedi_script = Mock()
+    document.jedi_script.return_value.get_signatures.return_value = []
 
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     assert "signatures" in response
 
 
-def test_signature_help_with_parameters(config, workspace, document, bec_client_mock):
+def test_signature_help_with_parameters(config, workspace, document, client_mock):
     """Test signature help includes parameter information."""
     position = {"line": 15, "character": 8}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     if response["signatures"]:
@@ -193,19 +191,18 @@ def test_signature_help_with_parameters(config, workspace, document, bec_client_
         assert "documentation" in sig
 
 
-def test_signature_capabilities_support(config, workspace, document, bec_client_mock):
+def test_signature_capabilities_support(config, workspace, document, client_mock):
     """Test that signature help works with basic functionality."""
     position = {"line": 15, "character": 8}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
 
 
-def test_signature_help_with_parameters_for_args(config, workspace, document, bec_client_mock):
+def test_signature_help_with_parameters_for_args(config, workspace, document, client_mock):
     """
     Test signature help includes parameter information.
     The position is inside umvr() call on line 30 in the fixture:
@@ -214,10 +211,9 @@ def test_signature_help_with_parameters_for_args(config, workspace, document, be
 
     position = {"line": 29, "character": 23}
 
-    with patch("pylsp_bec.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     assert response["activeParameter"] == 0  # Should be fixed to 0 since it is args
@@ -225,17 +221,17 @@ def test_signature_help_with_parameters_for_args(config, workspace, document, be
 
 @pytest.mark.parametrize("position", [{"line": 31, "character": 47}, {"line": 32, "character": 47}])
 def test_signature_help_with_parameters_for_args_scans(
-    position, config, workspace, document, bec_client_mock
+    position, config, workspace, document, client_mock
 ):
     """
     Test signature help includes parameter information.
     The position is inside scans.line_scan() call on line 31 in the fixture:
     scans.line_scan(dev.samx, -5, 5, dev.samy, |
     """
-    with patch("pylsp_bec.signatures.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     assert response["activeParameter"] == 0  # Should be fixed to 0 since it is args
@@ -243,17 +239,17 @@ def test_signature_help_with_parameters_for_args_scans(
 
 @pytest.mark.parametrize("position", [{"line": 33, "character": 46}, {"line": 34, "character": 46}])
 def test_signature_help_with_parameters_for_args_scans_kwargs(
-    position, config, workspace, document, bec_client_mock
+    position, config, workspace, document, client_mock
 ):
     """
     Test signature help includes parameter information.
     The position is inside scans.line_scan() call on line 31 in the fixture:
     scans.line_scan(dev.samx, -5, 5, dev.samy, relative=|
     """
-    with patch("pylsp_bec.signatures.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     # line_scan arguments are: args, exp_time, steps, relative
@@ -263,17 +259,17 @@ def test_signature_help_with_parameters_for_args_scans_kwargs(
 
 @pytest.mark.parametrize("position", [{"line": 35, "character": 61}, {"line": 36, "character": 61}])
 def test_signature_help_with_parameters_for_args_scans_kwargs_filled(
-    position, config, workspace, document, bec_client_mock
+    position, config, workspace, document, client_mock
 ):
     """
     Test signature help includes parameter information.
     The position is inside scans.line_scan() call on line 31 in the fixture:
     scans.line_scan(dev.samx, -5, 5, dev.samy, relative=True, exp_time=|
     """
-    with patch("pylsp_bec.signatures.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     # line_scan arguments are: args, exp_time, steps, relative
@@ -283,17 +279,17 @@ def test_signature_help_with_parameters_for_args_scans_kwargs_filled(
 
 @pytest.mark.parametrize("position", [{"line": 37, "character": 60}, {"line": 38, "character": 60}])
 def test_signature_help_with_parameters_for_args_scans_kwargs_filled_arg(
-    position, config, workspace, document, bec_client_mock
+    position, config, workspace, document, client_mock
 ):
     """
     Test signature help includes parameter information.
     The position is inside scans.line_scan() call on line 31 in the fixture:
     scans.line_scan(dev.samx, -5, 5, dev.samy, relative=True, exp_time|
     """
-    with patch("pylsp_bec.signatures.client", bec_client_mock):
-        response = signatures.pylsp_signature_help(
-            config=config, workspace=workspace, document=document, position=position
-        )
+
+    response = signatures.pylsp_signature_help(
+        config=config, workspace=workspace, document=document, position=position
+    )
 
     assert response is not None
     # line_scan arguments are: args, exp_time, steps, relative
