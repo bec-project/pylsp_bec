@@ -2,13 +2,11 @@ from functools import reduce
 from inspect import _ParameterKind
 
 import jedi
-import numpy as np
-from bec_ipython_client.high_level_interfaces.bec_hli import mv, mvr, umv, umvr
 from jedi.api import helpers
 from pylsp import _utils, hookimpl, uris
 from pylsp.plugins.signature import _param_docs
 
-from pylsp_bec import client
+from pylsp_bec.utils import get_namespace
 
 
 @hookimpl(tryfirst=True)
@@ -76,16 +74,7 @@ def get_object_from_namespace(expr: str, namespace: dict):
 def _get_runtime_signatures(document, position):
     sig_info = {"signatures": [], "activeSignature": 0}
 
-    namespace = {
-        "bec": client,
-        "np": np,
-        "dev": getattr(client.device_manager, "devices", None),
-        "scans": getattr(client, "scans", None),
-        "mv": mv,
-        "mvr": mvr,
-        "umv": umv,
-        "umvr": umvr,
-    }
+    namespace = get_namespace()
     code_position = _utils.position_to_jedi_linecolumn(document, position)
 
     script = jedi.Interpreter(

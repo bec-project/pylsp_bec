@@ -1,35 +1,29 @@
 import jedi
-import numpy as np
-from bec_ipython_client.high_level_interfaces.bec_hli import mv, mvr, umv, umvr
 from pylsp import _utils, hookimpl, lsp, uris
 from pylsp.plugins._resolvers import LABEL_RESOLVER, SNIPPET_RESOLVER
 from pylsp.plugins.jedi_completion import _format_completion, use_snippets
 
-from pylsp_bec import client
+from pylsp_bec.utils import get_namespace
 
 
 @hookimpl(trylast=True)
 def pylsp_completions(config, workspace, document, position):
     """Provide completions for BEC devices and methods."""
-    if document.shared_data.get("LAST_JEDI_COMPLETIONS"):
-        return []
     settings = config.plugin_settings("pylsp-bec", document_path=document.path)
-    resolve_eagerly = settings.get("eager", False)
-    signature_config = config.settings().get("signature", {})
+    namespace = get_namespace()
 
     code_position = _utils.position_to_jedi_linecolumn(document, position)
     code_position["fuzzy"] = settings.get("fuzzy", False)
 
-    namespace = {
-        "bec": client,
-        "np": np,
-        "dev": getattr(client.device_manager, "devices", None),
-        "scans": getattr(client, "scans", None),
-        "mv": mv,
-        "mvr": mvr,
-        "umv": umv,
-        "umvr": umvr,
-    }
+    if document.shared_data.get("LAST_JEDI_COMPLETIONS"):
+        pos = code_position["line"], code_position["column"]
+        leaf = document.jedi_script()._module_node.get_leaf_for_position(pos)
+        if leaf is None or leaf.type != "name":
+            return []
+
+    resolve_eagerly = settings.get("eager", False)
+    signature_config = config.settings().get("signature", {})
+
     script = jedi.Interpreter(document.source, [namespace], path=uris.to_fs_path(document.uri))
     completions = script.complete(**_utils.position_to_jedi_linecolumn(document, position))
 
@@ -72,6 +66,18 @@ def pylsp_completions(config, workspace, document, position):
         )
         for i, c in enumerate(completions)
     ]
+
+    for completion_dict, c in zip(ready_completions, completions):
+        # add type hints if possible
+        try:
+            completion_dict["type_hint"] = c.get_type_hint()
+        except Exception:  # pylint: disable=broad-except
+            completion_dict["type_hint"] = None
+
+        # patch the completion kind for instances.
+        # Instances are otherwise marked as reference and shown as 'abc'
+        if c.type == "instance":
+            completion_dict["kind"] = lsp.CompletionItemKind.Variable
 
     # TODO split up once other improvements are merged
     if include_class_objects:
