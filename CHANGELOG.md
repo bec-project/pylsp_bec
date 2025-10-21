@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.0 (2025-10-21)
+
+### Features
+
+- Add support for macros; cleanup
+  ([`88046c6`](https://github.com/bec-project/pylsp_bec/commit/88046c698320d0a68d6278649c3d9b533fb0706c))
+
+
 ## v1.0.0 (2025-09-25)
 
 ### Bug Fixes
