@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.2.0 (2025-10-21)
+
+### Features
+
+- Add support for setting the service config for a workspace
+  ([`2a1c191`](https://github.com/bec-project/pylsp_bec/commit/2a1c191ca06e41d13584a5582df995c893b4556e))
+
+
 ## v1.1.0 (2025-10-21)
 
 ### Features
