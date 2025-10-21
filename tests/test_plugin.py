@@ -1,15 +1,17 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from bec_lib.service_config import ServiceConfig
 from bec_lib.tests.fixtures import bec_client_mock  # noqa: F401
 
 from pylsp_bec import completions, signatures
+from pylsp_bec.utils import ClientWrapper, client
 
 
 @pytest.fixture
 def client_mock(bec_client_mock):
     """Fixture to provide a mock BEC client."""
-    with patch("pylsp_bec.utils.client", bec_client_mock) as mock:
+    with patch("pylsp_bec.utils.client._client", bec_client_mock) as mock:
         yield mock
 
 
@@ -313,3 +315,43 @@ def test_get_object_from_namespace():
     # Test invalid access
     result = signatures.get_object_from_namespace("nonexistent.attr", namespace)
     assert result is None
+
+
+def test_get_namespace_empty_client():
+    """Test that get_namespace returns empty dict when client is None."""
+    with patch("pylsp_bec.utils.client._client", None):
+        namespace = completions.get_namespace()
+        assert not namespace
+
+
+def test_client_wrapper():
+    """Test the ClientWrapper singleton behavior."""
+    wrapper1 = client
+    wrapper2 = ClientWrapper()
+
+    assert wrapper1 is wrapper2, "ClientWrapper should be a singleton"
+
+
+def test_client_wrapper_start():
+    """Test the start method of ClientWrapper."""
+    wrapper = ClientWrapper()
+
+    with patch("pylsp_bec.utils.BECClient") as MockBECClient:
+        mock_client_instance = MockBECClient.return_value
+        mock_client_instance.start = Mock()
+        mock_client_instance._service_config = ServiceConfig()
+
+        # Start the client
+        wrapper.start(name="test-client", config={"some_setting": 123})
+
+        # Ensure BECClient was instantiated and started
+        MockBECClient.assert_called_once()
+        mock_client_instance.start.assert_called_once()
+
+        # Starting again with same config should not restart
+        wrapper.start(name="test-client", config={"some_setting": 123})
+        MockBECClient.assert_called_once()  # Still only one instantiation
+
+        # Starting with different config should restart
+        wrapper.start(name="test-client", config={"redis": {"host": "demo", "port": 6379}})
+        assert MockBECClient.call_count == 2  # Now instantiated twice
