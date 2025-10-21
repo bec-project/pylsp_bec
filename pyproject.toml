@@ -35,6 +35,7 @@ Homepage = "https://github.com/bec-project/pylsp_bec"
 [project.entry-points."pylsp"]
 bec_completion_pylsp_plugin = "pylsp_bec.completions"
 bec_signature_help_pylsp_plugin = "pylsp_bec.signatures"
+bec_workspace_changed_pylsp_plugin = "pylsp_bec.workspace_changed"
 
 
 [tool.hatch.build.targets.wheel]
